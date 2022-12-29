@@ -59,9 +59,9 @@ def try_curvefit(DSLangmuir, pressure, molkg, p0, maxfev = 2000):
         p0 = np.array([np.nan, np.nan, np.nan, np.nan])
     return p0
 
-def iterative_DS_Langmuir(df_iso, k1_its=8, q_its=8, q1_value=0.7, maxfev = 3000): 
+def iterative_DS_Langmuir(df_iso, k1_its=12, q_its=12, q1_value=0.7, maxfev = 3000): 
     "Generates various p0 starting values, then generates curvefits for all of them"
-    qlinspace = np.linspace(0.3, 4, q_its)
+    qlinspace = np.linspace(0.3, 20, q_its)
     klogspace = np.logspace(1, -12, k1_its)
     molkg, pressure = return_molkg_pressure(df_iso)
     p0_array = np.zeros([4, k1_its * q_its * q_its])
@@ -150,7 +150,7 @@ def input_wrapper_langmuir():
 #name = "22mC5"
 #paths = "../../../Raspa/%s/%s-%dout.txt" %(name, name, temp)
 def main():
-    temp = 600
+    temp = 550
     auto_fit_plot_Langmuir(temp, calc_all=True)
     #input_wrapper_langmuir()
     #molkg, pressure = return_molkg_pressure(df.read_csv("/home/mike/Documents/uni/alice/Final_project/MinorProject/Raspa/outputs/3mC5/3mC5-600out.txt"))
