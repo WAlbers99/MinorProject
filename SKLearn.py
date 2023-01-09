@@ -26,7 +26,7 @@ easy_database = simple_database()
 #getting IAST combined with the molecule representaion
 x_data, y_data = make_IAST_database_Wessel_version(easy_database,3)
 
-x_train, x_test, y_train, y_test = train_test_split(x_data,y_data,test_size= 0.3)
+x_train, x_test, y_train, y_test = train_test_split(x_data,y_data,test_size= 0.2)
 
 print(x_train.shape); print(x_test.shape)
 start = time.time()

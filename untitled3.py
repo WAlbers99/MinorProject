@@ -61,7 +61,7 @@ dataset = dataset.dropna()#drop the rows from the dataset
 
 dataset['Origin'] = dataset['Origin'].map({1: 'USA', 2:'Europe', 3:'Japan'})
 dataset = pd.get_dummies(dataset, columns=['Origin'], prefix='', prefix_sep='')
-#print(dataset.tail())
+print(dataset.tail())
 
 train_dataset = dataset.sample(frac=0.8, random_state = 0)
 test_dataset = dataset.drop(train_dataset.index)
@@ -166,6 +166,3 @@ x = tf.linspace(0.0,250,251)
 y = dnn_horsepower_model.predict(x)
 
 plot_horsepower(x,y)
-test_results['dnn_horsepower_model'] = dnn_horsepower_model.evaluate(
-    test_features['Horsepower'], test_labels,
-    verbose=0)
