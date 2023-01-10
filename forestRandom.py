@@ -3,7 +3,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split  
 import os
 import pandas as pd
-# from General_functions import ML_database, make_training_database
+# from General_functions import ML_database, make_IAST_database_ver3
 import matplotlib.pyplot as plt
 from sklearn.neural_network import MLPRegressor
 
@@ -221,11 +221,12 @@ def make_training_database_ver2(max_amount_mols, chemstructure=ML_database()):
                     # print(data.shape)
                     selfie = 0
                     for i, mol in enumerate(mols):
-                        selfie += fracs[i] * np.repeat(chemstructure[mol], data.shape[0]).reshape(52,data.shape[0]).T
+                        selfie += np.repeat(chemstructure[mol], data.shape[0]).reshape(52,data.shape[0]).T
                     # print(selfie.shape)
                     # print(data.shape)
                     temp_arr = np.full((len(data), 1), temp) 
-                    data=np.hstack((selfie,temp_arr, data))
+                    frac_arr = np.full((len(data), 1), fracs)
+                    data=np.hstack((selfie,frac_arr,temp_arr, data))
                     data_IAST.append(data)
     return np.vstack(data_IAST)
 
@@ -296,22 +297,26 @@ def make_training_database_ver3(wanted_amount_mols, chemstructure=ML_database())
                     # print(data.shape)
                     selfie = 0
                     for i, mol in enumerate(mols):
-                        selfie += fracs[i] * np.repeat(chemstructure[mol], data.shape[0]).reshape(52,data.shape[0]).T
+                        selfie += np.repeat(chemstructure[mol], data.shape[0]).reshape(52,data.shape[0]).T
                     # print(selfie.shape)
                     # print(data.shape)
-                    temp_arr = np.full((len(data), 1), temp) 
+                    # temp_arr = np.full((len(data), 1), temp) 
                     # try:
                     #     selfie1 = np.repeat(chemstructure[mols[0]], data.shape[0]).reshape(52,data.shape[0]).T
                     #     selfie2 = np.repeat(chemstructure[mols[1]], data.shape[0]).reshape(52,data.shape[0]).T
                     #     data=np.hstack((np.full((len(data), 1), fracs[0]), selfie1,np.full((len(data), 1), fracs[1]), selfie2,temp_arr, data))
                     # except:
-                    selfie1 = np.repeat(chemstructure[mols[0]], data.shape[0]).reshape(52,data.shape[0]).T
-                    selfie2 = np.repeat(chemstructure[mols[1]], data.shape[0]).reshape(52,data.shape[0]).T
-                    selfie3 = np.repeat(chemstructure[mols[2]], data.shape[0]).reshape(52,data.shape[0]).T
-                    data=np.hstack((np.full((len(data), 1), fracs[0]), selfie1,np.full((len(data), 1), fracs[1]),selfie2, np.full((len(data), 1), fracs[2]),selfie3, temp_arr, data))
-                    
+
+                    temp_arr = np.full((len(data), 1), temp) 
+                    frac_arr = np.full((len(data), wanted_amount_mols), fracs)
+                    data=np.hstack((selfie,frac_arr,temp_arr, data))
+                    # data=np.hstack((selfie,temp_arr, data))
+                    # selfie3 = np.repeat(chemstructure[mols[2]], data.shape[0]).reshape(52,data.shape[0]).T                    
                     data_IAST.append(data)
-    return np.vstack(data_IAST)
+    data_IAST = np.vstack(data_IAST)
+    x_vals=data_IAST[:,:-wanted_amount_mols] 
+    y_vals=data_IAST[:,(len(data_IAST[0]))-wanted_amount_mols:]    
+    return x_vals, y_vals
 
 def make_training_database_ver4(wanted_amount_mols, chemstructure=ML_database()):
     path_IAST=glob.glob('IAST-segregated/automated_output/*')
@@ -425,7 +430,79 @@ def make_IAST_database_ver2(nummol, chemstructure=ML_database):
     y_vals=data_IAST[:,(len(data_IAST[0]))-nummol:]    
     return x_vals, y_vals
 
-def make_IAST_database_ver3(min_nummol, max_nummol, chemstructure=ML_database):
+# def make_IAST_database_ver3(min_nummol, max_nummol, chemstructure=ML_database):
+#     """
+#     Enter the number of molecules you want to mix (nummol). The function will
+#     in default use the ML_database for the chemical structure of the molecules, 
+#     which is a dictionary containing all selfie structures of the used 
+#     molecules.
+#     The function will return the x and y values of the IAST-data:
+#      * The variable x_vals is an 2D array which contains of multiple arrays 
+#        filled with the following: fraction of mixture molecule
+#        1, selfies code molecule 1, ..., fraction of mixture molecule nummol, 
+#        selfies code molecule nummol, the pressure, the temprature. In each 
+#        array (inside x_vals) is either the pressure or temprature is varied.
+#      * The variable y_vals contains the following: loading of molecule 1, ...,
+#        loading of molecule nummol. 
+       
+#     With the return values of this function you can create a train and test
+#     data set for your machine learning algorithm, using the following code 
+#     snippet:
+        
+#     x_train, x_test, y_train, y_test= train_test_split(x_vals, y_vals,
+#                                             test_size= 0.1, random_state=0)  
+#     """
+#     for nummol in range(min_nummol, max_nummol+1):
+#         #create list of all paths to the data files of the mixture of nummol molecules:
+#         path_IAST=glob.glob(f'IAST-segregated/automated_output/{nummol}_molecules/**/**/*.txt')
+        
+#         chemstructure=ML_database()
+#         data_IAST =[]
+#         for file in path_IAST: 
+#             file = file.replace("\\", "/") #comment this line if you use linux
+#             folders=file.split('/') #creates a list of all folders in the directory leading to the file
+#             temp=int( folders[3][:3] ) #extracts the temperature of the mixture from the folders list
+            
+#             #load data and insert the temperature at the end of each row of data:
+#             data=np.genfromtxt(file,delimiter='    ',skip_header=1,dtype=float) 
+#             if nummol < max_nummol:
+#                 data = np.insert(data,obj=1,axis=1,values=np.zeros(max_nummol - nummol))
+            
+#             data=np.insert(data,obj=1,axis=1,values=temp)
+            
+#             for molnum in range(nummol):
+#                 #create an array of the fraction (frac) and selfie (selfie) of 
+#                 #molecule molnum and add it to the array frac_selfie, where the two
+#                 #are combined. After the for loop the array frac_selfie contains
+#                 #of rows filled with the fraction of molecule 1, selfie of molecule
+#                 #1, ..., fraction of molecule nummol, selfie of nummol. frac_selfie
+#                 #contains of the same amount of columns as the data array and each
+#                 #row is identical.
+#                 frac =  np.full((len(data), 1), float(folders[-1].split('-')[molnum].split(".txt")[0]))
+#                 selfie = np.repeat(chemstructure[folders[4].split("-")[molnum]], data.shape[0]).reshape(52,data.shape[0]).T
+#                 if molnum == 0:
+#                     frac_selfie = np.hstack((frac, selfie))
+#                 else:
+#                     frac_selfie = np.hstack((frac_selfie, frac, selfie))
+                
+#             if nummol < max_nummol:
+#                 frac_selfie = np.hstack((frac_selfie, np.zeros((len(data), 53))))
+                
+#             #combine the frac_selfie array and the data array into one array. And 
+#             #append the combined array to data_IAST, which will gather all combined 
+#             #arrays:
+#             data=np.hstack((frac_selfie,data)) 
+#             data_IAST.append(data)
+#         print(nummol)
+#     data_IAST = np.vstack(data_IAST) #reorder the array
+    
+#     #seperate the input values (x_vals) and output values (y_vals) from the 
+#     #combined data set (data_IAST):
+#     x_vals=data_IAST[:,:-nummol] 
+#     y_vals=data_IAST[:,(len(data_IAST[0]))-nummol:]    
+#     return x_vals, y_vals
+
+def make_IAST_database_ver3(nummol, chemstructure=ML_database):
     """
     Enter the number of molecules you want to mix (nummol). The function will
     in default use the ML_database for the chemical structure of the molecules, 
@@ -447,48 +524,42 @@ def make_IAST_database_ver3(min_nummol, max_nummol, chemstructure=ML_database):
     x_train, x_test, y_train, y_test= train_test_split(x_vals, y_vals,
                                             test_size= 0.1, random_state=0)  
     """
-    for nummol in range(min_nummol, max_nummol+1):
-        #create list of all paths to the data files of the mixture of nummol molecules:
-        path_IAST=glob.glob(f'IAST-segregated/automated_output/{nummol}_molecules/**/**/*.txt')
+    #create list of all paths to the data files of the mixture of nummol molecules:
+    path_IAST=glob.glob(f'IAST-segregated/automated_output/{nummol}_molecules/**/**/*.txt')
+    # chemstructure=ML_database
+    data_IAST =[]
+    for file in path_IAST: 
+        file = file.replace("\\", "/") #comment this line if you use linux
+        folders=file.split('/') #creates a list of all folders in the directory leading to the file
+        temp=int( folders[3][:3] ) #extracts the temperature of the mixture from the folders list
         
-        chemstructure=ML_database()
-        data_IAST =[]
-        for file in path_IAST: 
-            file = file.replace("\\", "/") #comment this line if you use linux
-            folders=file.split('/') #creates a list of all folders in the directory leading to the file
-            temp=int( folders[3][:3] ) #extracts the temperature of the mixture from the folders list
+        #load data and insert the temperature at the end of each row of data:
+        data=np.genfromtxt(file,delimiter='    ',skip_header=1,dtype=float) 
+        data=np.insert(data,obj=1,axis=1,values=temp)
+        selfie = 0
+        for molnum in range(nummol):
+            #create an array of the fraction (frac) and selfie (selfie) of 
+            #molecule molnum and add it to the array frac_selfie, where the two
+            #are combined. After the for loop the array frac_selfie contains
+            #of rows filled with the fraction of molecule 1, selfie of molecule
+            #1, ..., fraction of molecule nummol, selfie of nummol. frac_selfie
+            #contains of the same amount of columns as the data array and each
+            #row is identical.
+            frac =  np.full((len(data), 1), float(folders[-1].split('-')[molnum].split(".txt")[0]))
+            # print(frac)
+            selfie += np.repeat(chemstructure()[folders[4].split("-")[molnum]], data.shape[0]).reshape(52,data.shape[0]).T
+            if molnum == 0:
+                fracs = frac
+            else:
+                fracs = np.append(fracs, frac, axis=1)
             
-            #load data and insert the temperature at the end of each row of data:
-            data=np.genfromtxt(file,delimiter='    ',skip_header=1,dtype=float) 
-            if nummol < max_nummol:
-                data = np.insert(data,obj=1,axis=1,values=np.zeros(max_nummol - nummol))
-            
-            data=np.insert(data,obj=1,axis=1,values=temp)
-            
-            for molnum in range(nummol):
-                #create an array of the fraction (frac) and selfie (selfie) of 
-                #molecule molnum and add it to the array frac_selfie, where the two
-                #are combined. After the for loop the array frac_selfie contains
-                #of rows filled with the fraction of molecule 1, selfie of molecule
-                #1, ..., fraction of molecule nummol, selfie of nummol. frac_selfie
-                #contains of the same amount of columns as the data array and each
-                #row is identical.
-                frac =  np.full((len(data), 1), float(folders[-1].split('-')[molnum].split(".txt")[0]))
-                selfie = np.repeat(chemstructure[folders[4].split("-")[molnum]], data.shape[0]).reshape(52,data.shape[0]).T
-                if molnum == 0:
-                    frac_selfie = np.hstack((frac, selfie))
-                else:
-                    frac_selfie = np.hstack((frac_selfie, frac, selfie))
-                
-            if nummol < max_nummol:
-                frac_selfie = np.hstack((frac_selfie, np.zeros((len(data), 53))))
-                
-            #combine the frac_selfie array and the data array into one array. And 
-            #append the combined array to data_IAST, which will gather all combined 
-            #arrays:
-            data=np.hstack((frac_selfie,data)) 
-            data_IAST.append(data)
-        print(nummol)
+        #combine the frac_selfie array and the data array into one array. And 
+        #append the combined array to data_IAST, which will gather all combined 
+        #arrays:
+        # fracs_arr = np.full((len(data), nummol), fracs)
+        data=np.hstack((selfie,fracs,data)) 
+        data_IAST.append(data)
+    
     data_IAST = np.vstack(data_IAST) #reorder the array
     
     #seperate the input values (x_vals) and output values (y_vals) from the 
@@ -497,90 +568,83 @@ def make_IAST_database_ver3(min_nummol, max_nummol, chemstructure=ML_database):
     y_vals=data_IAST[:,(len(data_IAST[0]))-nummol:]    
     return x_vals, y_vals
 
-x_vals, y_vals = make_IAST_database_ver2(2)
+def Performance(amount_mols, rf_model, x_train, x_test, y_train, y_test):
+    y_pred=rf_model.predict(x_test) 
+    
+    
+    abs_err = np.abs(y_pred-y_test)
+    rel_err = abs_err/y_test
+    
+    nanIndex = np.isnan(rel_err)
+    rel_err = rel_err[~nanIndex] #to remove nan's
+    infIndex = np.isinf(rel_err)
+    rel_err = rel_err[~infIndex] #to remove zero's
+    
+    abs_err = abs_err[~nanIndex] #to remove nan's
+    abs_err = abs_err[~infIndex] #to remove zero's
+    
+    rel_err = rel_err.flatten()
+    abs_err = abs_err.flatten()
+    
+    mean_rel_err = np.mean(rel_err)
+    mean_abs_err = np.mean(abs_err)
+    
+    plt.figure()
+    plt.title(f"Relative error Decision Tree, {amount_mols} molecules micture")
+    plt.scatter(range(len(rel_err)), rel_err, label="Relative error point i")
+    plt.hlines(mean_rel_err, xmin = 0, xmax = len(rel_err), color="red", label=f"Mean relative error = {round(mean_rel_err,5)}")
+    plt.yscale("log")
+    plt.xlabel("Index of array rel_err")
+    plt.ylabel("Relative error of predicted point wrt to known point")
+    plt.legend()
+    plt.show()
+    
+    plt.figure()
+    plt.title(f"Absolute error Decision Tree, {amount_mols} molecules micture")
+    plt.scatter(range(len(abs_err)), abs_err, label="Absolute error point i")
+    plt.hlines(mean_abs_err, xmin = 0, xmax = len(abs_err), color="red", label=f"Mean absolute error = {round(mean_abs_err,5)}")
+    plt.yscale("log")
+    plt.xlabel("Index of array abs_err")
+    plt.ylabel("Absolute error of predicted point wrt to known point")
+    plt.legend()
+    
+    plt.figure()
+    plt.title(f"Performance Decision Tree, {amount_mols} molecules micture")
+    plt.scatter(y_test, y_pred)
+    plt.xlabel("True loading (from IAST)")
+    plt.ylabel("Predicted loading (from Desicion Tree)")
+    plt.show()
+    
+    print(f"Mean relative error = {mean_rel_err}")
+    print(f"Mean relative error = {np.std(mean_rel_err)}")
+    print(f"Mean absolute error = {mean_abs_err}")
+    print(f"Mean absolute error = {np.std(mean_abs_err)}")
+
+
+x_vals, y_vals = make_IAST_database_ver3(2, ML_database)
+print("test")
 x_train, x_test, y_train, y_test= train_test_split(x_vals, y_vals,
                                         test_size=0.1, random_state=0)  
 
 
-np.save()
-
-regr = RandomForestRegressor(random_state=0)
+regr = RandomForestRegressor(random_state=0, n_jobs=-1)
 regr.fit(x_train, y_train)
 
-y_pred=regr.predict(x_test) 
-
-rel_err=np.abs(y_pred-y_test)#/y_test
-
-rel_err = rel_err[:,0]
-plt.figure()
-plt.title("Performance Decision Tree (VERSION 2)")
-plt.scatter(range(len(rel_err)), rel_err)
-plt.xlabel("Index of array rel_err")
-plt.ylabel("Relative error of predicted point wrt to known point")
-plt.show()
-
-plt.figure()
-plt.title("Performance Decision Tree (VERSION 2), zoomed in plot")
-plt.scatter(range(len(rel_err)), rel_err)
-plt.ylim(0,0.25)
-plt.xlabel("Index of array rel_err")
-plt.ylabel("Relative error of predicted point wrt to known point")
-plt.show()
-
-rel_err = rel_err[~np.isnan(rel_err)] #to remove nan's
-rel_err = rel_err[~np.isinf(rel_err)] #to remove inf's
-mean_rel_err = np.mean(rel_err)
-print(mean_rel_err)
-
-plt.figure()
-plt.title("Performance Decision Tree (VERSION 2), logaritmic plot")
-plt.scatter(range(len(rel_err)), rel_err, label="Relative error point i")
-plt.hlines(mean_rel_err, xmin = 0, xmax = len(rel_err), color="red", label="Mean relative error")
-plt.yscale("log")
-plt.xlabel("Index of array rel_err")
-plt.ylabel("Relative error of predicted point wrt to known point")
-plt.legend()
-plt.show()
-
-plt.figure()
-plt.title("Performance Decision Tree (VERSION 3),\nusing mix of three molecules")
-plt.scatter(y_test, y_pred)
-# plt.xscale("log")
-# plt.yscale("log")
-plt.xlabel("True loading (from IAST)")
-plt.ylabel("Predicted loading (from Desicion Tree)")
-plt.show()
-
-rel_err = rel_err[~np.isnan(rel_err)] #to remove nan's
-rel_err = rel_err[~np.isinf(rel_err)] #to remove inf's
-mean_rel_err = np.mean(rel_err)
-print(mean_rel_err)
-
-"""Version 1, don't change is backup"""
-# data_set_raspa, data_set_iast = make_training_database()
-    
-# x_vals=data_set_iast[:,:(len(data_set_iast[0]))-2]
-# y_vals=data_set_iast[:,(len(data_set_iast[0]))-2:]
-
-
-# x_train, x_test, y_train, y_test= train_test_split(x_vals, y_vals ,test_size= 0.1, random_state=0)  
-
-# regr = RandomForestRegressor(random_state=0)
-# regr.fit(x_train, y_train)
-
 # y_pred=regr.predict(x_test) 
+Performance(3, regr, x_train, x_test, y_train, y_test)
 
-# rel_err=np.abs(y_pred-y_test)/y_test
+# rel_err=np.abs(y_pred-y_test)#/y_test
+
 # rel_err = rel_err[:,0]
 # plt.figure()
-# plt.title("Performance Decision Tree (VERSION 1)")
+# plt.title("Performance Decision Tree (VERSION 2)")
 # plt.scatter(range(len(rel_err)), rel_err)
 # plt.xlabel("Index of array rel_err")
 # plt.ylabel("Relative error of predicted point wrt to known point")
 # plt.show()
 
 # plt.figure()
-# plt.title("Performance Decision Tree (VERSION 1), zoomed in plot")
+# plt.title("Performance Decision Tree (VERSION 2), zoomed in plot")
 # plt.scatter(range(len(rel_err)), rel_err)
 # plt.ylim(0,0.25)
 # plt.xlabel("Index of array rel_err")
@@ -593,7 +657,7 @@ print(mean_rel_err)
 # print(mean_rel_err)
 
 # plt.figure()
-# plt.title("Performance Decision Tree (VERSION 1), logaritmic plot")
+# plt.title("Performance Decision Tree (VERSION 2), logaritmic plot")
 # plt.scatter(range(len(rel_err)), rel_err, label="Relative error point i")
 # plt.hlines(mean_rel_err, xmin = 0, xmax = len(rel_err), color="red", label="Mean relative error")
 # plt.yscale("log")
@@ -601,6 +665,66 @@ print(mean_rel_err)
 # plt.ylabel("Relative error of predicted point wrt to known point")
 # plt.legend()
 # plt.show()
+
+# plt.figure()
+# plt.title("Performance Decision Tree (VERSION 3),\nusing mix of three molecules")
+# plt.scatter(y_test, y_pred)
+# # plt.xscale("log")
+# # plt.yscale("log")
+# plt.xlabel("True loading (from IAST)")
+# plt.ylabel("Predicted loading (from Desicion Tree)")
+# plt.show()
+
+# rel_err = rel_err[~np.isnan(rel_err)] #to remove nan's
+# rel_err = rel_err[~np.isinf(rel_err)] #to remove inf's
+# mean_rel_err = np.mean(rel_err)
+# print(mean_rel_err)
+
+# """Version 1, don't change is backup"""
+# # data_set_raspa, data_set_iast = make_training_database()
+    
+# # x_vals=data_set_iast[:,:(len(data_set_iast[0]))-2]
+# # y_vals=data_set_iast[:,(len(data_set_iast[0]))-2:]
+
+
+# # x_train, x_test, y_train, y_test= train_test_split(x_vals, y_vals ,test_size= 0.1, random_state=0)  
+
+# # regr = RandomForestRegressor(random_state=0)
+# # regr.fit(x_train, y_train)
+
+# # y_pred=regr.predict(x_test) 
+
+# # rel_err=np.abs(y_pred-y_test)/y_test
+# # rel_err = rel_err[:,0]
+# # plt.figure()
+# # plt.title("Performance Decision Tree (VERSION 1)")
+# # plt.scatter(range(len(rel_err)), rel_err)
+# # plt.xlabel("Index of array rel_err")
+# # plt.ylabel("Relative error of predicted point wrt to known point")
+# # plt.show()
+
+# # plt.figure()
+# # plt.title("Performance Decision Tree (VERSION 1), zoomed in plot")
+# # plt.scatter(range(len(rel_err)), rel_err)
+# # plt.ylim(0,0.25)
+# # plt.xlabel("Index of array rel_err")
+# # plt.ylabel("Relative error of predicted point wrt to known point")
+# # plt.show()
+
+# # rel_err = rel_err[~np.isnan(rel_err)] #to remove nan's
+# # rel_err = rel_err[~np.isinf(rel_err)] #to remove inf's
+# # mean_rel_err = np.mean(rel_err)
+# # print(mean_rel_err)
+
+# # plt.figure()
+# # plt.title("Performance Decision Tree (VERSION 1), logaritmic plot")
+# # plt.scatter(range(len(rel_err)), rel_err, label="Relative error point i")
+# # plt.hlines(mean_rel_err, xmin = 0, xmax = len(rel_err), color="red", label="Mean relative error")
+# # plt.yscale("log")
+# # plt.xlabel("Index of array rel_err")
+# # plt.ylabel("Relative error of predicted point wrt to known point")
+# # plt.legend()
+# # plt.show()
 
 
 

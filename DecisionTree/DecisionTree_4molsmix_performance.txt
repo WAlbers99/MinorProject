@@ -1,0 +1,9 @@
+
+Mean relative error = 0.09704720524759813
+Formula relative error: np.abs(y_pred-y_test)/y_test
+Mean absolute error = 0.0008531664235314341
+Formula absolute error: np.abs(y_pred-y_test)
+Score model (based on test data) = 0.9998983866012414
+Score model (based on train data) = 1.0
+Total time to predict 310666 amount of molmixes (mixture of 4 mols): 2.47e-03
+Time to predict loading 1 molmix (mixture of 4 mols): 7.94e-09
