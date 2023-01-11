@@ -13,7 +13,7 @@ def ML_database():
     symbols = sf.get_alphabet_from_selfies(selfies_dataset) # creating symbols for each character that is in the database
     
     symbols.add("[nop]") # this is an padding symbol, otherwise it does not work
-    print(symbols)
+
     
     vocab_stoi = {symbol: idx for idx, symbol in enumerate(symbols)} #giving idx to each symbol
     
@@ -69,29 +69,6 @@ def make_RASPA_database(chemstructure=ML_database()):
         
     return np.vstack(data_RASPA)
         
-# def IAST_database():#outdated: uses old IAST outputs, only for 2 molecules
-#     path_to_out='MachineLearning/Outputs_IAST'
-#     paths = glob.glob(path_to_out + "/*.txt")
-    
-#     new_path="MachineLearning/Outputs_IAST/"
-#     for file in paths:
-#         #Removing pressures that are too high
-#         data=np.genfromtxt(file,delimiter='    ',skip_header=1,dtype=float)
-#         data=np.delete(data,obj=np.where(data[:,0]>1e8),axis=0)
-        
-#         length=np.ones(np.shape(data)[0])
-#         file_split=file.split('-')
-        
-#         temp=int(file_split[1])
-#         f1=float(file_split[2][:3])
-#         f2=float(file_split[-1][:3])
-        
-#         data=np.insert(data,obj=1,axis=1,values=temp*length)
-#         data=np.insert(data,obj=2,axis=1,values=f1*length)
-#         data=np.insert(data,obj=3,axis=1,values=f2*length)
-        
-#         fname=file.split('/')[-1]
-#         np.savetxt(new_path+fname, data,header='pressure,temperature,f1,f2,molkg1,molkg2',delimiter=',')
 
 def make_IAST_database(chemstructure=ML_database):
     
