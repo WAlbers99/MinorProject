@@ -48,7 +48,6 @@ def simple_database():
     
     return database
 
-
 def make_RASPA_database(chemstructure=ML_database()):
     path_to_out="Raspa/outputs/**/*.txt"
     data_RASPA=[]
@@ -419,9 +418,10 @@ def Performance(name_model, amount_mols, rf_model, x_train, x_test, y_train, y_t
         y_pred=rf_model.predict(x_test) 
         end_time = time.time()
         pred_time_temp = end_time-start_time
-        pred_time = (pred_time + pred_time_temp)/i
-        print(pred_time)
-        
+        pred_time += pred_time_temp
+        print(pred_time/i)
+    pred_time = pred_time/99
+
         
     abs_err = np.abs(y_pred-y_test)
     rel_err = abs_err/y_test
@@ -444,41 +444,42 @@ def Performance(name_model, amount_mols, rf_model, x_train, x_test, y_train, y_t
     for i in name_model.split(" "):
         new_name += i
     
-    plt.figure()
-    plt.title(f"Relative error {name_model}, {amount_mols} molecules mixture\nMean relative error = {'%.0e' %Decimal(mean_rel_err)}")
-    plt.scatter(range(len(rel_err)), rel_err, s=4,label="Relative error point i")
-    plt.hlines(mean_rel_err, xmin = 0, xmax = len(rel_err), color="red", label="Mean relative error")
-    plt.yscale("log")
-    plt.xlabel("Index of datapoint in array")
-    plt.ylabel("Relative error of predicted point wrt to known point")
-    plt.legend()
-    plt.savefig(f"{new_name}_{amount_mols}molsmix_RelErrPlot")
-    plt.show()
+    # plt.figure()
+    # # plt.title(f"Relative error {name_model}, {amount_mols} molecules mixture\nMean relative error = {'%.0e' %Decimal(mean_rel_err)}")
+    # plt.scatter(range(len(rel_err)), rel_err, s=4,label="Relative error point i")
+    # plt.hlines(mean_rel_err, xmin = 0, xmax = len(rel_err), color="red", label="Mean relative error")
+    # plt.yscale("log")
+    # plt.xlabel("Index of datapoint in array")
+    # plt.ylabel("Relative error of predicted point wrt to known point")
+    # plt.legend()
+    # plt.savefig(f"{new_name}_{amount_mols}molsmix_RelErrPlot.pdf",bbox_inches='tight')
+    # plt.show()
+    
+    # plt.figure()
+    # # plt.title(f"Absolute error {name_model}, {amount_mols} molecules mixture\nMean absolute error = {'%.0e' %Decimal(mean_abs_err)}")
+    # plt.scatter(range(len(abs_err)), abs_err, s=4, label="Absolute error point i")
+    # plt.hlines(mean_abs_err, xmin = 0, xmax = len(abs_err), color="red", label="Mean absolute error")
+    # plt.yscale("log")
+    # plt.xlabel("Index of datapoint in array")
+    # plt.ylabel("Absolute error of predicted point wrt to known point")
+    # plt.legend()
+    # plt.savefig(f"{new_name}_{amount_mols}molsmix_AbsErrPlot.pdf",bbox_inches='tight')
+    # plt.show()
     
     plt.figure()
-    plt.title(f"Absolute error {name_model}, {amount_mols} molecules mixture\nMean absolute error = {'%.0e' %Decimal(mean_abs_err)}")
-    plt.scatter(range(len(abs_err)), abs_err, s=4, label="Absolute error point i")
-    plt.hlines(mean_abs_err, xmin = 0, xmax = len(abs_err), color="red", label="Mean absolute error")
-    plt.yscale("log")
-    plt.xlabel("Index of datapoint in array")
-    plt.ylabel("Absolute error of predicted point wrt to known point")
-    plt.legend()
-    plt.savefig(f"{new_name}_{amount_mols}molsmix_AbsErrPlot")
-    plt.show()
-    
-    plt.figure()
-    plt.title(f"Performance {name_model}, {amount_mols} molecules mixture")
-    plt.scatter(y_test, y_pred, s=10)
-    plt.xlabel("calculated loading by IAST (mol/kg)")
-    plt.ylabel(f"Predicted loading {name_model} (mol/kg)")
-    plt.savefig(f"{new_name}_{amount_mols}molsmix_PlotCompPredTrue")
+    # plt.title(f"Performance {name_model}, {amount_mols} molecules mixture")
+    try:
+        plt.scatter(y_test[:10000], y_pred[:10000], s=10)
+    except:
+        plt.scatter(y_test, y_pred, s=10)
+    plt.xlabel("Calculated loading by IAST (mol/kg)")
+    plt.ylabel("Predicted loading (mol/kg)")
+    plt.savefig(f"{new_name}_{amount_mols}molsmix_PlotCompPredTrue.pdf",bbox_inches='tight')
     plt.show()
     
     print(f"\nMean relative error = {mean_rel_err}")
     print("Formula relative error: np.abs(y_pred-y_test)/y_test\n")
-    print(f"Mean absolute error = {mean_abs_err}")
-    print("Formula absolute error: np.abs(y_pred-y_test)\n")
-
+    
     print(f"Score model (based on test data) = {rf_model.score(x_test,y_test)}")
     print(f"Score model (based on train data) = {rf_model.score(x_train,y_train)}\n")
    
@@ -488,8 +489,6 @@ def Performance(name_model, amount_mols, rf_model, x_train, x_test, y_train, y_t
     f = open(f"{new_name}_{amount_mols}molsmix_performance.txt","w+")
     f.write(f"\nMean relative error = {mean_rel_err}\n")
     f.write("Formula relative error: np.abs(y_pred-y_test)/y_test\n")
-    f.write(f"Mean absolute error = {mean_abs_err}\n")
-    f.write("Formula absolute error: np.abs(y_pred-y_test)\n")
 
     f.write(f"Score model (based on test data) = {rf_model.score(x_test,y_test)}\n")
     f.write(f"Score model (based on train data) = {rf_model.score(x_train,y_train)}\n")
