@@ -3,12 +3,11 @@ import pandas as pd
 import numpy as np 
 import matplotlib.pyplot as plt
 import sklearn
-from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 import time
 
 # Import necessary modules
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, KFold, StratifiedKFold
 from sklearn.metrics import mean_squared_error,classification_report,confusion_matrix
 from math import sqrt
 from sklearn.metrics import r2_score
@@ -21,6 +20,8 @@ from keras.layers import Dense
 from decimal import Decimal
 from joblib import dump, load
 import winsound
+from sklearn.model_selection import cross_validate
+
 
 def beep():
     duration = 1000  # milliseconds
@@ -163,41 +164,98 @@ def Performance(name_model, amount_mols, rf_model, x_train, x_test, y_train, y_t
     f.close()
     return 0;
 
+def model_build_compile(fold_no,mol0,mol1,mol2,mol3,mol4,mol5,act0,act1,act2,act3,act4,act5,act6):
+    shape_input_layer = no_mols*9+2
+    
+    model = Sequential()
+    model.add(Dense(mol0, input_dim=shape_input_layer, activation= act0))
+    model.add(Dense(mol1, activation= act1))
+    model.add(Dense(mol2, activation= act2))
+    model.add(Dense(mol3, activation=act3))
+    model.add(Dense(mol4, activation= act4))
+    model.add(Dense(mol5, activation=act5))
+    model.add(Dense(no_mols, activation=act6))
+    
+    model.compile(loss= "mean_squared_error" , optimizer="adam", metrics=["accuracy"])
+    print('-----------------------------------------------')
+    print(f'Training for fold {fold_no}')
+    start = time.time()
+    model.fit(x_train, y_train, epochs=15)
+    end = time.time()
+    print("Model training took: ",end-start,"[sec]")
+    scores = model.evaluate(x_test,y_test,verbose=0)
+    print(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]}; {model.metrics_names[1]} of {scores[1]*100}%')
+    acc_per_fold.append(scores[1]*100)
+    loss_per_fold.append(scores[0])
+    
+    fold_no = fold_no + 1
+    return model
+
+def cross_validation(model, x_train, y_train, splits=5):
+    kf = KFold(n_splits = splits)
+
+def save_model(model, no_mols):
+    dump(model, 'model_'+str(no_mols))
+def load_model(no_mols):
+    return load('model_'+str(no_mols))
+no_mols=2
 
 #making database of molecules representation
 selfies_database = ML_database()
 easy_database = simple_database()
-no_mols = 4
-shape_input_layer = no_mols*9 +2
-
 #getting IAST combined with the molecule representaion
 x_data, y_data = make_IAST_database_Wessel_version(easy_database,no_mols)
-
 x_train, x_test, y_train, y_test = train_test_split(x_data,y_data,test_size= 0.2)
 
-print(x_train.shape); print(x_test.shape)
+acc_per_fold = []
+loss_per_fold = []
 
-model = Sequential()
-model.add(Dense(50, input_dim=shape_input_layer, activation= "sigmoid"))
-model.add(Dense(100, activation= "sigmoid"))
-model.add(Dense(150, activation= "sigmoid"))
-model.add(Dense(200, activation='relu'))
-model.add(Dense(150, activation= "sigmoid"))
-model.add(Dense(100, activation="sigmoid"))
-model.add(Dense(no_mols))
+kfold = KFold(n_splits=5, shuffle=True)
 
-model.compile(loss= "mean_squared_error" , optimizer="adam", metrics=["mean_squared_error"])
+fold_no=1
+''' 
+for train, test in kfold.split(x_data,y_data):
+'''
 
+#save_model(NN, no_mols)
+#NN = load_model(no_mols)
+'''
+print('--------------------------------')
+print('Score per fold')
+for i in range(0,len(acc_per_fold)):
+  print('------------------------------------------------------------------------')
+  print(f'> Fold {i+1} - Loss: {loss_per_fold[i]} - Accuracy: {acc_per_fold[i]}%')
+print('------------------------------------------------------------------------')
+print('Average scores for all folds:')
+print(f'> Accuracy: {np.mean(acc_per_fold)} (+- {np.std(acc_per_fold)})')
+print(f'> Loss: {np.mean(loss_per_fold)}')
+print('------------------------------------------------------------------------')
 
-start = time.time()
-model.fit(x_train, y_train, epochs=30)
-end = time.time()
-print("Model training took: ",end-start,"[sec]")
-dump(model, 'model_'+str(no_mols))
-
+'''
 
 
 #model = load('model_'+str(no_mols))
+act_lst = ['sigmoid','relu']
+no_nodes = [10,50,100,150,200]
+for node_0 in no_nodes:
+    for node_1 in no_nodes:
+        for node_2 in no_nodes:
+            for node_3 in no_nodes:
+                for node_4 in no_nodes:
+                    for node_5 in no_nodes:
+                        for act0 in act_lst:
+                            for act1 in act_lst:
+                                for act2 in act_lst:
+                                    for act3 in act_lst:
+                                        for act3 in act_lst:
+                                            for act4 in act_lst:
+                                                for act5 in act_lst:
+                                                    for act6 in act_lst:
+                                                        NN = model_build_compile(fold_no,node_0,node_1,node_2,node_3,node_4,node_5,act0,act1,act2,act3,act4,act5,act6)
+                                                        name = "NN:"+str(node_0)+str(node_1)+str(node_2)+str(node_3)+str(node_4)+str(node_5)+str(act0)+str(act1)+str(act2)+str(act3)+str(act4)+str(act5)+str(act6)
+                                                        Performance(name , no_mols, NN , x_train, x_test, y_train, y_test)
+                                                    
+                                        
 
-Performance("Support Vector Regression" , no_mols, model , x_train, x_test, y_train, y_test)
-beep()
+
+#beep()
