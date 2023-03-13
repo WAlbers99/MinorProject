@@ -31,13 +31,6 @@ def plot_loss(history):
     plt.legend()
     plt.grid(True)
 
-def plot_horsepower(x,y):
-    plt.figure()
-    plt.scatter(train_features['Horsepower'], train_labels, label='Data')
-    plt.plot(x, y, color = 'k', label='Predictions')
-    plt.xlabel('Horsepower')
-    plt.ylabel('MPG')
-    plt.legend()
 
 def build_and_compile_model(no_mols):
     shape_input_layer = no_mols*9 +2
@@ -249,34 +242,8 @@ plot_loss(history)
 dnn.save('dnn_model_'+str(no_mols)+'_mols')
 '''
 
-#print(f"Ive started loading the model at {datetime.now()}")
-#starttime = time.time()
-dnn = keras.models.load_model('dnn_model_'+str(no_mols)+'_mols')
-#print(f'Loading took {starttime-time.time()}[sec]')
-#test_predictions = dnn.predict(test_features)
 
-'''
-a = plt.axes(aspect='equal')
-plt.figure()
-plt.scatter(test_labels, test_predictions)
-plt.xlabel('True Values [Fractions]')
-plt.ylabel('Predictions [Fractions]')
-lims = [0, 50]
-plt.xlim(lims)
-plt.ylim(lims)
-_ = plt.plot(lims, lims)
-plt.show()
-
-plt.figure()
-error = test_predictions - test_labels
-plt.hist(error, bins=25)
-plt.xlabel('Prediction Error [Fractions]')
-_ = plt.ylabel('Count')
-plt.show()
-
-test_results = dnn.evaluate(test_features, test_labels, verbose=0)
-'''
-
+#dnn = keras.models.load_model('dnn_model_'+str(no_mols)+'_mols')
 
 
 #https://www.youtube.com/watch?v=K03Uve6fgFM&ab_channel=CodingLikeMad

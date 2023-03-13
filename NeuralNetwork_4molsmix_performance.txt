@@ -3,5 +3,5 @@ Mean relative error = 72120.7843277935
 Formula relative error: np.abs(y_pred-y_test)/y_test
 Mean absolute error = 0.2221055485174364
 Formula absolute error: np.abs(y_pred-y_test)
-Total time to predict 669812 amount of molmixes (mixture of 4 mols): 4.82e+00
-Time to predict loading 1 molmix (mixture of 4 mols): 7.20e-06
+Total time to predict 669812 amount of molmixes (mixture of 4 mols): 3.98e+00
+Time to predict loading 1 molmix (mixture of 4 mols): 5.95e-06
